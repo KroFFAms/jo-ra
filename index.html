@@ -19,6 +19,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--tile:#0C8B8B;--tile-deep:#0A6E6E;--tile-soft:#E4F1F0;--gold:#E0A32E;--ink:#12262B;--muted:#63797C;--bg:#EFF3F3;--card:#FFFFFF;--line:#E0E8E8;--danger:#D64545;--shadow:0 1px 2px rgba(18,38,43,.06),0 8px 24px rgba(18,38,43,.06);--radius:16px}
+body.dark{--ink:#E6EDED;--muted:#8FA3A5;--bg:#0E1719;--card:#162427;--line:#25383B;--tile-soft:#12302F;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35)}
+body.dark .logo b{color:#E6EDED}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
@@ -36,6 +38,8 @@ header{position:sticky;top:0;z-index:40;background:var(--card);border-bottom:1px
 .search-wrap input{width:100%;padding:11px 14px 11px 40px;border:1px solid var(--line);border-radius:12px;background:var(--bg);outline:none;transition:.15s}
 .search-wrap input:focus{border-color:var(--tile);background:#fff}
 .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.icon-btn.theme{flex:none}
+.icon-btn.recent.on{background:var(--tile);color:#fff;border-color:var(--tile)}
 .btn-install{flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--gold);color:#3a2a05;font-weight:700;font-size:13px;padding:8px 12px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;white-space:nowrap}
 .btn-post{flex:none;display:flex;align-items:center;gap:6px;background:var(--tile);color:#fff;font-weight:700;font-size:15px;padding:11px 15px;border-radius:12px;box-shadow:0 4px 12px rgba(12,139,139,.3);transition:.15s}
 .btn-post:active{transform:scale(.96)}
@@ -133,6 +137,14 @@ main{max-width:1100px;margin:0 auto;padding:8px 14px 40px}
 .gal-nav{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px}
 .gal-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45)}
 .gal-dot.on{background:#fff;width:20px;border-radius:4px}
+#gal img{cursor:zoom-in}
+#lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.94);align-items:center;justify-content:center}
+#lightbox.on{display:flex}
+#lbImg{max-width:100%;max-height:100%;object-fit:contain}
+.lb-x{position:absolute;top:16px;right:16px;width:42px;height:42px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer}
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:26px;cursor:pointer}
+.lb-arrow.l{left:14px}.lb-arrow.r{right:14px}
+.lb-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;font-size:14px;background:rgba(0,0,0,.5);padding:5px 12px;border-radius:20px}
 .gal-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;font-size:22px}
 .gal-arrow.l{left:8px}.gal-arrow.r{right:8px}
 .d-fav{position:absolute;top:12px;left:12px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font-size:19px;color:#b7c3c3;z-index:3}
@@ -215,6 +227,7 @@ main{max-width:1100px;margin:0 auto;padding:8px 14px 40px}
   <div class="head-row">
     <div class="logo brand-font"><span class="mark">🏠</span><span><b>Jo'</b><i>ra</i></span></div>
     <button class="btn-install" id="installBtn" onclick="_joraInstall()" style="display:none">📲 O'rnatish</button>
+    <button class="icon-btn theme" id="themeBtn" title="Tungi rejim" onclick="toggleTheme()">🌙</button>
     <div class="search-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
       <input id="search" type="search" placeholder="Qidirish...">
@@ -236,6 +249,7 @@ main{max-width:1100px;margin:0 auto;padding:8px 14px 40px}
 <div class="toolbar">
   <button class="tool-btn" id="openFilter">🎚️ Filtrlar <span class="fbadge" id="filterBadge" style="display:none">0</span></button>
   <button class="icon-btn fav" id="favToggle" title="Sevimlilar">♥</button>
+  <button class="icon-btn recent" id="recentToggle" title="Yaqinda ko'rilganlar">🕐</button>
   <button class="tool-btn" id="nearBtn" title="Yaqin atrofdagilar">📍 Yaqinimda</button>
   <div class="view-toggle"><button id="vList" class="on" title="Ro'yxat">☰</button><button id="vMap" title="Xarita">🗺️</button></div>
 </div>
@@ -275,7 +289,7 @@ main{max-width:1100px;margin:0 auto;padding:8px 14px 40px}
       </div>
     </div>
     <div class="field"><label>Maydon (m²)</label><div class="rowmm"><input id="ffAmin" type="number" inputmode="numeric" placeholder="dan"><input id="ffAmax" type="number" inputmode="numeric" placeholder="gacha"></div></div>
-    <div class="field"><label>Saralash</label><select id="ffSort"><option value="new">Avval yangilari</option><option value="cheap">Avval arzonlari</option><option value="exp">Avval qimmatlari</option></select></div>
+    <div class="field"><label>Saralash</label><select id="ffSort"><option value="new">Avval yangilari</option><option value="old">Avval eskilari</option><option value="cheap">Avval arzonlari</option><option value="exp">Avval qimmatlari</option></select></div>
   </div>
   <div class="submit-bar"><button class="btn-clear" id="clearFilter">Tozalash</button><button class="btn-submit" id="applyFilter">Ko'rsatish</button></div>
 </div>
@@ -346,7 +360,7 @@ const DEMO=[
 ];
 
 let sb=null,DEMO_MODE=true,LISTINGS=[];
-const state={deal:"all",type:"all",region:"all",search:"",sort:"new",view:"list",priceMin:null,priceMax:null,priceCur:"USD",rooms:"all",areaMin:null,areaMax:null,favOnly:false,near:false,myLat:null,myLng:null,nearKm:15,page:1};
+const state={deal:"all",type:"all",region:"all",search:"",sort:"new",view:"list",priceMin:null,priceMax:null,priceCur:"USD",rooms:"all",areaMin:null,areaMax:null,favOnly:false,recentOnly:false,near:false,myLat:null,myLng:null,nearKm:15,page:1};
 const draftPhotos=[];
 let draftType=null,draftDeal="sotiladi",draftLoc={lat:CENTER[0],lng:CENTER[1]},EDIT_ID=null;
 let postMapObj=null,postMarker=null,detMapObj=null,listMapObj=null,listMarkers=[];
@@ -400,6 +414,7 @@ function deepLink(){const pid=new URLSearchParams(location.search).get("id");if(
 function filtered(){
   let r=LISTINGS.slice();
   if(state.favOnly)r=r.filter(x=>isFav(x.id));
+  if(state.recentOnly){var rec=getRecent();var idx={};rec.forEach(function(id,i){idx[String(id)]=i;});r=r.filter(x=>idx[String(x.id)]!=null).sort((a,b)=>idx[String(a.id)]-idx[String(b.id)]);}
   if(state.deal!=="all")r=r.filter(x=>x.bitim===state.deal);
   if(state.type!=="all")r=r.filter(x=>x.kategoriya===state.type);
   if(state.region!=="all")r=r.filter(x=>x.hudud===state.region);
@@ -414,6 +429,7 @@ function filtered(){
        .filter(x=>x._dist!=null&&x._dist<=state.nearKm);
   } else { r.forEach(x=>{x._dist=null;}); }
   if(state.sort==="new")r.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(state.sort==="old")r.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   if(state.sort==="cheap")r.sort((a,b)=>toUZS(a)-toUZS(b));
   if(state.sort==="exp")r.sort((a,b)=>toUZS(b)-toUZS(a));
   return r;
@@ -422,7 +438,7 @@ function render(){const list=filtered();state.page=1;document.getElementById("co
 const PAGE_SIZE=60;
 function renderGrid(list){
   const grid=document.getElementById("grid");
-  if(!list.length){grid.innerHTML=`<div class="state" style="grid-column:1/-1"><div class="em">${state.favOnly?"🤍":"🔍"}</div><h3>${state.favOnly?"Sevimlilar bo'sh":"E'lon topilmadi"}</h3><p>${state.favOnly?"E'lonlardagi yurakchani bosib saqlang.":"Filtrlarni o'zgartiring yoki e'lon bering."}</p></div>`;return}
+  if(!list.length){grid.innerHTML=`<div class="state" style="grid-column:1/-1"><div class="em">${state.recentOnly?"🕐":state.favOnly?"🤍":"🔍"}</div><h3>${state.recentOnly?"Hali e'lon ko'rmadingiz":state.favOnly?"Sevimlilar bo'sh":"E'lon topilmadi"}</h3><p>${state.recentOnly?"Ko'rgan e'lonlaringiz shu yerda chiqadi.":state.favOnly?"E'lonlardagi yurakchani bosib saqlang.":"Filtrlarni o'zgartiring yoki e'lon bering."}</p></div>`;return}
   const shown=list.slice(0,state.page*PAGE_SIZE);
   grid.innerHTML=shown.map(x=>{
     const img=x.rasmlar&&x.rasmlar[0],t=typeOf(x.kategoriya);
@@ -436,7 +452,7 @@ function renderGrid(list){
         <div class="price">${priceHTML(x)}</div>
         ${specs?`<div class="c-specs">${specs}</div>`:""}
         <div class="c-title">${esc(x.sarlavha)}</div>
-        <div class="c-meta">${x._dist!=null?`<span class="c-dist">📍 ${fmtKm(x._dist)}</span><span class="dot"></span>`:""}${x.hudud}<span class="dot"></span>${timeAgo(x.created_at)}</div>
+        <div class="c-meta">${x._dist!=null?`<span class="c-dist">📍 ${fmtKm(x._dist)}</span><span class="dot"></span>`:""}${x.hudud}<span class="dot"></span>${timeAgo(x.created_at)}${Number(x.korilgan)>0?`<span class="dot"></span>👁 ${x.korilgan}`:""}</div>
       </div></article>`;
   }).join("")+(shown.length<list.length?`<div class="load-more-wrap" style="grid-column:1/-1"><button class="btn-more" id="loadMore">Yana ko'rsatish (${list.length-shown.length})</button></div>`:"");
   const lm=grid.querySelector("#loadMore");if(lm)lm.onclick=()=>{state.page++;renderGrid(list);};
@@ -473,12 +489,13 @@ function centerListMap(){if(!listMapObj)return;const pts=listMarkers.map(m=>m.ge
 let galIndex=0,galImgs=[];
 function openDetail(id){
   const x=LISTINGS.find(l=>String(l.id)===String(id));if(!x)return;
+  pushRecent(id);countView(x);
   galImgs=x.rasmlar||[];galIndex=0;
   const t=typeOf(x.kategoriya),initial=(x.ism||"?").trim().charAt(0).toUpperCase(),phone=(x.telefon||"").replace(/[^\d+]/g,""),mine=isMine(x.id);
   const specs=[];if(x.xonalar)specs.push({v:x.xonalar,k:"xona"});if(x.maydon)specs.push({v:x.maydon,k:"m²"});if(x.qavat)specs.push({v:x.qavat,k:"qavat"});
   const s=document.getElementById("detailSheet");
   s.innerHTML=`<div class="grab"></div>
-    <div class="gal" id="gal">${galImgs.length?`<img id="galImg" src="${galImgs[0]}" alt="">`:`<div class="noimg">${t.em}</div>`}
+    <div class="gal" id="gal">${galImgs.length?`<img id="galImg" src="${galImgs[0]}" alt="" onclick="openLightbox()">`:`<div class="noimg">${t.em}</div>`}
       <button class="d-fav ${isFav(x.id)?"on":""}" id="detFav">♥</button>
       ${galImgs.length>1?`<button class="gal-arrow l" id="galL">‹</button><button class="gal-arrow r" id="galR">›</button><div class="gal-nav">${galImgs.map((_,i)=>`<span class="gal-dot ${i===0?'on':''}"></span>`).join("")}</div>`:""}
       <button class="x-btn" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9)" id="detClose">✕</button></div>
@@ -486,7 +503,7 @@ function openDetail(id){
       <div class="d-price">${priceHTML(x)}</div>
       <div class="d-title">${esc(x.sarlavha)}</div>
       ${specs.length?`<div class="specs-grid">${specs.map(sp=>`<div class="spec"><div class="v">${esc(sp.v)}</div><div class="k">${sp.k}</div></div>`).join("")}</div>`:""}
-      <div class="d-tags"><span class="d-tag">${t.em} ${t.name}</span><span class="d-tag">${x.bitim==="ijara"?"🔑 Ijaraga":"🏷️ Sotiladi"}</span><span class="d-tag">🕐 ${timeAgo(x.created_at)}</span></div>
+      <div class="d-tags"><span class="d-tag">${t.em} ${t.name}</span><span class="d-tag">${x.bitim==="ijara"?"🔑 Ijaraga":"🏷️ Sotiladi"}</span><span class="d-tag">🕐 ${timeAgo(x.created_at)}</span><span class="d-tag" id="viewCount">👁 ${x.korilgan||0}</span></div>
       ${x.tavsif?`<div class="d-sec-title">Tavsif</div><div class="d-desc">${esc(x.tavsif)}</div>`:""}
       <div class="d-sec-title">Joylashuv</div>
       ${x.lat!=null?`<div id="detMap"></div><button class="dir-btn" id="dirBtn">🧭 Yo'l ko'rsatish</button>`:`<div style="color:var(--muted);font-size:14px">Xaritada belgilanmagan</div>`}
@@ -512,6 +529,10 @@ function openDetail(id){
   if(x.lat!=null&&typeof L!=="undefined"){setTimeout(()=>{detMapObj=L.map("detMap",{zoomControl:false,scrollWheelZoom:false}).setView([x.lat,x.lng],15);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OSM"}).addTo(detMapObj);L.marker([x.lat,x.lng]).addTo(detMapObj);detMapObj.invalidateSize()},250)}
 }
 function galMove(d){galIndex=(galIndex+d+galImgs.length)%galImgs.length;document.getElementById("galImg").src=galImgs[galIndex];document.querySelectorAll("#gal .gal-dot").forEach((el,i)=>el.classList.toggle("on",i===galIndex))}
+function openLightbox(){if(!galImgs.length)return;var lb=document.getElementById("lightbox");document.getElementById("lbImg").src=galImgs[galIndex];lbCount();document.querySelectorAll(".lb-arrow").forEach(a=>a.style.display=galImgs.length>1?"block":"none");lb.classList.add("on");}
+function closeLightbox(e){if(e&&e.target&&e.target.id==="lbImg")return;document.getElementById("lightbox").classList.remove("on");}
+function lbMove(d,e){if(e)e.stopPropagation();galMove(d);document.getElementById("lbImg").src=galImgs[galIndex];lbCount();}
+function lbCount(){var c=document.getElementById("lbCount");if(c)c.textContent=galImgs.length>1?(galIndex+1)+" / "+galImgs.length:"";}
 function closeDetail(){closeSheet("detailSheet","detailBg");if(detMapObj){try{detMapObj.remove()}catch(e){}detMapObj=null}}
 
 function shareListing(x){
@@ -706,6 +727,27 @@ function renderBanner(){
   if(ads.length>1&&!_adT){_adT=setInterval(function(){_adI=(_adI+1)%ads.length;paint();},5000);}
 }
 function closeAd(e){if(e){e.preventDefault();e.stopPropagation();}_adClosed=true;renderBanner();}
+function pushRecent(id){try{var a=JSON.parse(localStorage.getItem("jora_recent")||"[]");a=a.filter(function(x){return String(x)!==String(id);});a.unshift(String(id));a=a.slice(0,12);localStorage.setItem("jora_recent",JSON.stringify(a));}catch(e){}}
+function getRecent(){try{return JSON.parse(localStorage.getItem("jora_recent")||"[]");}catch(e){return[];}}
+function countView(x){
+  if(DEMO_MODE)return;
+  var seen={};try{seen=JSON.parse(localStorage.getItem("jora_seen")||"{}");}catch(e){}
+  if(seen[String(x.id)])return; // bir e'lonni bir marta sanaymiz
+  seen[String(x.id)]=1;try{localStorage.setItem("jora_seen",JSON.stringify(seen));}catch(e){}
+  sb.rpc("elon_korish",{p_id:Number(x.id)}).then(function(r){
+    if(r&&r.data!=null){x.korilgan=r.data;var el=document.getElementById("viewCount");if(el)el.textContent="👁 "+r.data;}
+  }).catch(function(){});
+}
+function toggleTheme(){
+  var on=document.body.classList.toggle("dark");
+  try{localStorage.setItem("jora_theme",on?"dark":"light");}catch(e){}
+  var b=document.getElementById("themeBtn");if(b)b.textContent=on?"☀️":"🌙";
+  var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute("content",on?"#0E1719":"#0C8B8B");
+}
+function initTheme(){
+  var t="light";try{t=localStorage.getItem("jora_theme")||"light";}catch(e){}
+  if(t==="dark"){document.body.classList.add("dark");var b=document.getElementById("themeBtn");if(b)b.textContent="☀️";var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute("content","#0E1719");}
+}
 function setNearKm(km){
   state.nearKm=km;
   document.querySelectorAll("#nearRadius button").forEach(b=>b.classList.toggle("on",Number(b.dataset.km)===km));
@@ -741,7 +783,7 @@ function bindEvents(){
   document.getElementById("postBg").onclick=closePost;
   document.getElementById("detailBg").onclick=closeDetail;
   document.getElementById("submitPost").onclick=submitPost;
-  renderBanner();
+  renderBanner();initTheme();
   document.getElementById("fileInput").onchange=onFiles;
   document.getElementById("myLoc").onclick=myLocation;
   document.getElementById("vList").onclick=()=>setView("list");
@@ -751,7 +793,8 @@ function bindEvents(){
   document.getElementById("filterBg").onclick=()=>closeSheet("filterSheet","filterBg");
   document.getElementById("applyFilter").onclick=applyFilterFromSheet;
   document.getElementById("clearFilter").onclick=clearFilters;
-  document.getElementById("favToggle").onclick=()=>{state.favOnly=!state.favOnly;document.getElementById("favToggle").classList.toggle("on",state.favOnly);render()};
+  document.getElementById("favToggle").onclick=()=>{state.favOnly=!state.favOnly;if(state.favOnly){state.recentOnly=false;document.getElementById("recentToggle").classList.remove("on");}document.getElementById("favToggle").classList.toggle("on",state.favOnly);render()};
+  document.getElementById("recentToggle").onclick=()=>{state.recentOnly=!state.recentOnly;if(state.recentOnly){state.favOnly=false;document.getElementById("favToggle").classList.remove("on");}document.getElementById("recentToggle").classList.toggle("on",state.recentOnly);render()};
   document.getElementById("nearBtn").onclick=toggleNear;
   document.querySelectorAll("#ffCur button").forEach(b=>b.onclick=()=>document.querySelectorAll("#ffCur button").forEach(x=>x.classList.toggle("on",x===b)));
   document.querySelectorAll("#ffRooms .rchip").forEach(b=>b.onclick=()=>document.querySelectorAll("#ffRooms .rchip").forEach(x=>x.classList.toggle("on",x===b)));
@@ -762,6 +805,7 @@ function bindEvents(){
 
 init();
 </script>
+<div id="lightbox" onclick="closeLightbox(event)"><button class="lb-x" onclick="closeLightbox(event)">✕</button><button class="lb-arrow l" onclick="lbMove(-1,event)">‹</button><img id="lbImg" src="" alt=""><button class="lb-arrow r" onclick="lbMove(1,event)">›</button><div class="lb-count" id="lbCount"></div></div>
 <script>
 (function(){
   var ICON192="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFbUlEQVR4nO3dzVbbOhSGYYfFEO42uQpytzCng9aQBpJYlrT/vveZnrWKI+3XsqE9HJZgXt7ePr2vAXN9nE4H72tYuV4Iw46VVxTmX5ShxyOWMZh9IQYfrSxCmP4FGHz0mhnCtD+YwcdoM0IY/gcy+JhtZAhPo/6gZWH4YWPknA0picGHl97ToPsEYPjhqXf+ugJg+BFBzxzuDoDhRyR753FXAAw/Itozl80BMPyIrHU+mwJg+JFBy5xuDoDhRyZb53VTAAw/Mtoytw8DYPiR2aP5HfpXIYBs7gbA3R8V3JvjmwEw/Kjk1jzzCARpvwbA3R8V/TbXnACQ9iMA7v623o9H70uQcj3fnACO1uEnAj//BcDd38710BOBncs5f/a8EEX3Bn39b6/ns9XlyPs6Abj7z7f1Ls9pMN8677wDGGkdaiKwQQAG9g4zEcx3WBYef2YaMcS8E8zDCTDJ+/E47A7OSTAPAUwwY2BHBoVvBDDY7CElgrEIYCCr4SSCcZ54AR7DeiiJYAxOgE6ez+ZE0I8AOkQYQF6O+xDATtGGLtr1ZEEAO0QdtqjXFRkBNIo+ZNGvLxoC2CjTs3aW64yAADbIOFAZr9kDATyQeZAynVpeCOCOKsNT5XPMQAA3VBuaap9nFAK4Uvmxoern6kEAFxQGROEztiCAf5QGo/Ip14oAFq3hv6T6uS/JB6A+BOqfXzYAHgO+Ka+DZADKG36L6prIBaC60Vsoro1UAIob3Ert0VAmAKVNHUFlvcoHoHZHG0lh3UoHoLCBs1Vfw7IBVN84S5XXsmQAlTfMS9VHyXIBVNykSKqtb5kAqt6hIqq0ziUCqLQhWVRZ8/QBVNmIjCqsfeoAKmxAdtkfPdMGkHnRK8q6H+kCyH7HqSzjvqQKIOMCq8m2R2kCyLawyjLtVYoAMi0o/sqyZ+EDyLKQ+CnD+1rYADIsHraJvI8hA4i8YNgn6p6GCyDqQqFfxL0NFUDEBcJY0fY4TADRFgbzRHq/cw8g0mLAVoR9dw0gwgLAl/cMuAXg/cERh+csuATA8OOa10yYB8Dw4xaP2Xi2+kIMPrZY5+T1fDb5eiYnAMOPVlYzMz0Ahh97WczO9Ecgq6NsRXDzWe/pTO4/CAM8EQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkEQCkmf2KJCUz///5/P6DsTgBBpv9yyMq/XKKCAhgIKvhJIJxCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSCADSnj5Op4P3RQBeOAEgjQAgjQAgjQAg7WlZloUXYSj6OJ0O5U6A1/PZ+xJKq7a+5QIAWnwFUOkxqNpdKopK67rOe9kTwGOz3o/HUl/nUqXhv/Tjrv/y9vbpcSEzWQ/MzGGp9Fm8XD7tPHteiJVKm1jps0Tw4xGo0rsAcO16vsu+AwBb/BoApwAq+m2uOQEg7WYAnAKo5NY83z0BiAAV3JtjHoEg7WEAnALI7NH8bjoBiAAZbZnbzY9ARIBMts5r0zsAESCDljltfgkmAkTWOp+7vgtEBIhoz1zu/jYoESCSvfPY9XMAIkAEPXPY/YMwIoCn3vkbOrwV/zUZYhp14x36VyE4DWBh5JxNG1hOA4w24wY7/Y5NCOg188nC7JGFENDK4pHa/JmdEPCI5buk60srMWDl9Q2UP+u755qpqpxQAAAAAElFTkSuQmCC";
