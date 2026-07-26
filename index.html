@@ -40,6 +40,10 @@ header{position:sticky;top:0;z-index:40;background:var(--card);border-bottom:1px
 .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .icon-btn.theme{flex:none}
 .icon-btn.recent.on{background:var(--tile);color:#fff;border-color:var(--tile)}
+.card.vip{border:1.5px solid var(--gold);box-shadow:0 2px 4px rgba(224,163,46,.18),0 10px 28px rgba(224,163,46,.14)}
+.badge-vip{position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#F0B843,#E0A32E);color:#3a2a05;font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.3px;box-shadow:0 2px 6px rgba(224,163,46,.4)}
+.d-vip-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F0B843,#E0A32E);color:#3a2a05;font-size:13px;font-weight:800;padding:5px 12px;border-radius:8px;margin-bottom:10px}
+.act.vip{background:#FFF8EC;border-color:#E7C87E;color:#8a6410}
 .btn-install{flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--gold);color:#3a2a05;font-weight:700;font-size:13px;padding:8px 12px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;white-space:nowrap}
 .btn-post{flex:none;display:flex;align-items:center;gap:6px;background:var(--tile);color:#fff;font-weight:700;font-size:15px;padding:11px 15px;border-radius:12px;box-shadow:0 4px 12px rgba(12,139,139,.3);transition:.15s}
 .btn-post:active{transform:scale(.96)}
@@ -225,7 +229,7 @@ main{max-width:1100px;margin:0 auto;padding:8px 14px 40px}
 
 <header>
   <div class="head-row">
-    <div class="logo brand-font"><span class="mark">🏠</span><span><b>Jo'</b><i>ra</i></span></div>
+    <div class="logo brand-font" onclick="adminTap()"><span class="mark">🏠</span><span><b>Jo'</b><i>ra</i></span></div>
     <button class="btn-install" id="installBtn" onclick="_joraInstall()" style="display:none">📲 O'rnatish</button>
     <button class="icon-btn theme" id="themeBtn" title="Tungi rejim" onclick="toggleTheme()">🌙</button>
     <div class="search-wrap">
@@ -371,6 +375,8 @@ function saveFavs(){try{localStorage.setItem("jora_favs",JSON.stringify([...FAVS
 function saveMine(){try{localStorage.setItem("jora_mine",JSON.stringify(MINE))}catch(e){}}
 const isFav=id=>FAVS.has(String(id));
 const isMine=id=>!!MINE[String(id)];
+function isVip(x){return x&&x.vip_gacha&&new Date(x.vip_gacha)>new Date();}
+var ADMIN_PASS=(function(){try{return localStorage.getItem("jora_admin")||"";}catch(e){return "";}})();
 
 function init(){
   bindEvents();
@@ -432,6 +438,8 @@ function filtered(){
   if(state.sort==="old")r.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   if(state.sort==="cheap")r.sort((a,b)=>toUZS(a)-toUZS(b));
   if(state.sort==="exp")r.sort((a,b)=>toUZS(b)-toUZS(a));
+  // VIP e'lonlar doim tepada (joriy tartibni saqlagan holda)
+  r=r.slice().sort((a,b)=>(isVip(b)?1:0)-(isVip(a)?1:0));
   return r;
 }
 function render(){const list=filtered();state.page=1;document.getElementById("count").textContent=list.length+" ta e'lon";renderGrid(list);if(state.view==="map")renderMap(list)}
@@ -443,8 +451,8 @@ function renderGrid(list){
   grid.innerHTML=shown.map(x=>{
     const img=x.rasmlar&&x.rasmlar[0],t=typeOf(x.kategoriya);
     const specs=[x.xonalar?x.xonalar+" xona":"",x.maydon?x.maydon+" m²":"",x.qavat?x.qavat+"-q":""].filter(Boolean).join(" · ");
-    return `<article class="card" data-id="${x.id}">
-      <div class="card-img">${img?`<img loading="lazy" src="${img}" alt="">`:`<div class="noimg">${t.em}</div>`}
+    return `<article class="card${isVip(x)?" vip":""}" data-id="${x.id}">
+      <div class="card-img">${isVip(x)?`<span class="badge-vip">⭐ VIP</span>`:""}${img?`<img loading="lazy" src="${img}" alt="">`:`<div class="noimg">${t.em}</div>`}
         <button class="fav-btn ${isFav(x.id)?"on":""}" data-fav="${x.id}">♥</button>
         <span class="badge-deal ${x.bitim==="ijara"?"rent":"sell"}">${x.bitim==="ijara"?"IJARAGA":"SOTILADI"}</span>
         ${x.rasmlar&&x.rasmlar.length>1?`<span class="badge-count">📷 ${x.rasmlar.length}</span>`:""}</div>
@@ -500,6 +508,7 @@ function openDetail(id){
       ${galImgs.length>1?`<button class="gal-arrow l" id="galL">‹</button><button class="gal-arrow r" id="galR">›</button><div class="gal-nav">${galImgs.map((_,i)=>`<span class="gal-dot ${i===0?'on':''}"></span>`).join("")}</div>`:""}
       <button class="x-btn" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9)" id="detClose">✕</button></div>
     <div class="detail-body">
+      ${isVip(x)?`<div class="d-vip-badge">⭐ VIP e'lon</div>`:""}
       <div class="d-price">${priceHTML(x)}</div>
       <div class="d-title">${esc(x.sarlavha)}</div>
       ${specs.length?`<div class="specs-grid">${specs.map(sp=>`<div class="spec"><div class="v">${esc(sp.v)}</div><div class="k">${sp.k}</div></div>`).join("")}</div>`:""}
@@ -515,8 +524,10 @@ function openDetail(id){
       ${mine
         ?`<button class="act edit" id="editBtn">✏️ Tahrirlash</button><button class="act share" id="shareBtn">🔗</button><button class="act del" id="delBtn">🗑️</button>`
         :`<button class="act call" id="showPhoneBtn" data-phone="${phone}">📞 Raqamni ko'rsatish</button><button class="act share" id="shareBtn">🔗</button><button class="act report" id="reportBtn">⚠️</button>`}
+      ${ADMIN_PASS?`<button class="act vip" id="vipBtn">${isVip(x)?"⭐ VIP bekor":"⭐ VIP qilish"}</button>`:""}
     </div>`;
   s.querySelector("#detClose").onclick=closeDetail;
+  var vipB=s.querySelector("#vipBtn");if(vipB)vipB.onclick=()=>toggleVip(x);
   s.querySelector("#detFav").onclick=()=>{toggleFav(x.id);s.querySelector("#detFav").classList.toggle("on",isFav(x.id));renderGrid(filtered())};
   const shareB=s.querySelector("#shareBtn");if(shareB)shareB.onclick=()=>shareListing(x);
   const showP=s.querySelector("#showPhoneBtn");if(showP)showP.onclick=()=>revealPhone(x);
@@ -729,6 +740,32 @@ function renderBanner(){
 function closeAd(e){if(e){e.preventDefault();e.stopPropagation();}_adClosed=true;renderBanner();}
 function pushRecent(id){try{var a=JSON.parse(localStorage.getItem("jora_recent")||"[]");a=a.filter(function(x){return String(x)!==String(id);});a.unshift(String(id));a=a.slice(0,12);localStorage.setItem("jora_recent",JSON.stringify(a));}catch(e){}}
 function getRecent(){try{return JSON.parse(localStorage.getItem("jora_recent")||"[]");}catch(e){return[];}}
+var _at=0,_atT=0;
+function adminTap(){var t=Date.now();if(t-_atT>1500)_at=0;_atT=t;_at++;if(_at>=5){_at=0;openAdmin();}}
+function openAdmin(){
+  if(ADMIN_PASS){
+    if(confirm("Admin rejimi yoqilgan. O'chirilsinmi?")){ADMIN_PASS="";try{localStorage.removeItem("jora_admin");}catch(e){}toast("Admin rejimi o'chdi");render();}
+    return;
+  }
+  var pw=prompt("🔑 Admin parol (VIP boshqarish uchun):");if(!pw)return;
+  ADMIN_PASS=pw.trim();try{localStorage.setItem("jora_admin",ADMIN_PASS);}catch(e){}
+  toast("✓ Admin rejimi yoqildi. E'lon ichida ⭐ VIP tugmasi chiqadi.");render();
+}
+async function toggleVip(x){
+  if(!ADMIN_PASS){toast("Avval admin parolni kiriting",1);return;}
+  if(DEMO_MODE){x.vip_gacha=isVip(x)?null:new Date(Date.now()+7*864e5).toISOString();toast(isVip(x)?"⭐ VIP qilindi (demo)":"VIP bekor (demo)");closeDetail();render();return;}
+  try{
+    if(isVip(x)){
+      const{error}=await sb.rpc("elon_vip_bekor",{p_pass:ADMIN_PASS,p_id:Number(x.id)});if(error)throw error;
+      x.vip_gacha=null;toast("VIP bekor qilindi");
+    }else{
+      var kun=prompt("Necha kun VIP bo'lsin?","7");if(kun===null)return;kun=Math.max(1,parseInt(kun)||7);
+      const{data,error}=await sb.rpc("elon_vip",{p_pass:ADMIN_PASS,p_id:Number(x.id),p_kun:kun});if(error)throw error;
+      x.vip_gacha=data;toast("⭐ VIP qilindi: "+kun+" kun");
+    }
+    closeDetail();render();
+  }catch(e){toast(/ruxsat/i.test(e.message||"")?"Parol noto'g'ri":"Xato: "+(e.message||""),1);}
+}
 function countView(x){
   if(DEMO_MODE)return;
   var seen={};try{seen=JSON.parse(localStorage.getItem("jora_seen")||"{}");}catch(e){}
